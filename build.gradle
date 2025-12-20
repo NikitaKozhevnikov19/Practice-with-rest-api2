@@ -1,0 +1,69 @@
+plugins {
+    id 'java-library'
+    id 'io.qameta.allure' version '2.11.2'
+    id "io.freefair.lombok" version "6.0.0-m2"
+}
+
+group = 'kozherka.ru'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+
+def restAssuredVersion = "5.3.1"
+def allureVersion = "2.21.0"
+def selenideVersion = "6.16.1"
+
+dependencies {
+
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-schema-validator:$restAssuredVersion"
+
+
+    testImplementation "com.codeborne:selenide:$selenideVersion"
+
+
+    testImplementation "io.qameta.allure:allure-rest-assured:$allureVersion"
+    testImplementation "io.qameta.allure:allure-selenide:$allureVersion" // ЭТОГО НЕ БЫЛО (нужно для шагов в UI)
+    testImplementation "io.qameta.allure:allure-junit5:$allureVersion"
+
+
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
+    testImplementation 'org.freemarker:freemarker:2.3.31'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.7'
+}
+
+allure {
+    report {
+        version.set(allureVersion)
+    }
+    adapter {
+        aspectjWeaver.set(true) // Нужно для работы аннотаций @Step
+        frameworks {
+            junit5 {
+                adapterVersion.set(allureVersion)
+            }
+        }
+    }
+}
+
+
+task profileTestRunner(type: Test) {
+    useJUnitPlatform {
+        includeTags("ProfileTests")
+    }
+
+    systemProperties(System.getProperties())
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    testLogging {
+        lifecycle {
+            events "started", "skipped", "failed", "standard_error", "standard_out"
+            exceptionFormat "short"
+        }
+    }
+}
