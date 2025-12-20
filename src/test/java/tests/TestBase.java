@@ -8,6 +8,7 @@ public class TestBase {
 
     @BeforeAll
     public static void setupEnvironment() {
+        Configuration.remote = System.getProperty("remote_browser");
         RestAssured.baseURI = "https://demoqa.com";
         Configuration.baseUrl = "https://demoqa.com";
         Configuration.browserSize = "1920x1080";
