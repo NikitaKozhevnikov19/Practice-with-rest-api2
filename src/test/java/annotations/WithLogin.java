@@ -1,4 +1,4 @@
-package models;
+package annotations;
 
 import extensions.LoginExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
