@@ -1,12 +1,17 @@
-package models;
+package api;
 
 import extensions.LoginExtension;
+import models.Book;
+import models.ISBN;
 import specs.SpecCustoms;
+
+import java.util.Arrays;
 import java.util.List;
+
 import static helpers.CustomApiListener.withCustomTemplates;
 import static io.restassured.RestAssured.given;
 
-public class ApiRequests {
+public class BookApiRequests {
 
     private static final String BOOKSTORE_ENDPOINT = "/BookStore/v1/Books";
 
@@ -15,8 +20,9 @@ public class ApiRequests {
     }
 
     public void clearUserInventory() {
+
         given()
-                .filter(withCustomTemplates())
+                .filter(withCustomTemplates()) // Оставили как было у тебя
                 .spec(SpecCustoms.requestSpecification)
                 .queryParam("UserId", LoginExtension.getUserId())
                 .header("Authorization", "Bearer " + getAuthToken())
@@ -27,10 +33,12 @@ public class ApiRequests {
     }
 
     public void addBooksToCollection(String... isbns) {
-        List<ISBN> isbnList = List.of(new ISBN(isbns[0]), new ISBN(isbns[1]));
+
+        List<ISBN> isbnList = Arrays.stream(isbns).map(ISBN::new).toList();
         Book bookPayload = new Book(LoginExtension.getUserId(), isbnList);
+
         given()
-                .filter(withCustomTemplates())
+                .filter(withCustomTemplates()) // Оставили как было у тебя
                 .spec(SpecCustoms.requestSpecification)
                 .header("Authorization", "Bearer " + getAuthToken())
                 .body(bookPayload)
