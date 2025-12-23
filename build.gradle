@@ -49,6 +49,10 @@ allure {
     }
 }
 
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
 
 task profileTestRunner(type: Test) {
     useJUnitPlatform {
@@ -60,6 +64,10 @@ task profileTestRunner(type: Test) {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+
+    systemProperties(System.getProperties())
+
+
     testLogging {
         lifecycle {
             events "started", "skipped", "failed", "standard_error", "standard_out"
