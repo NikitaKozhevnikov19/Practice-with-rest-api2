@@ -1,10 +1,10 @@
 package extensions;
 
+import annotations.WithLogin;
 import io.qameta.allure.Allure;
 import io.restassured.response.Response;
 import lombok.Getter;
 import models.UserLoginData;
-import models.WithLogin;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.openqa.selenium.Cookie;
