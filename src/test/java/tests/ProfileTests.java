@@ -1,8 +1,8 @@
 package tests;
 
 import extensions.LoginExtension;
-import models.ApiRequests;
-import models.WithLogin;
+import api.BookApiRequests;
+import annotations.WithLogin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import static io.qameta.allure.Allure.step;
 public class ProfileTests extends TestBase {
 
     private final UserPage userPage = new UserPage();
-    private final ApiRequests api = new ApiRequests();
+    private final BookApiRequests bookApi = new BookApiRequests();
     private final LoginExtension loginExtension = new LoginExtension();
 
     private static final String ISBN_1 = "9781449325862"; // Git Pocket Guide
@@ -29,8 +29,8 @@ public class ProfileTests extends TestBase {
     public void deleteSpecificBookFromCollectionTest() {
 
         step("Подготовка данных: Очистка коллекции и добавление новых книг", () -> {
-            api.clearUserInventory();
-            api.addBooksToCollection(ISBN_1, ISBN_2);
+            bookApi.clearUserInventory();
+            bookApi.addBooksToCollection(ISBN_1, ISBN_2);
         });
 
 
