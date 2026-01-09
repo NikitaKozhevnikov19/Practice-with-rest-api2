@@ -1,21 +1,17 @@
 package extensions;
 
 import annotations.WithLogin;
+import api.AuthApiRequests;
 import io.qameta.allure.Allure;
 import io.restassured.response.Response;
 import lombok.Getter;
-import models.UserLoginData;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.openqa.selenium.Cookie;
 import pages.UserPage;
-import specs.SpecCustoms;
 
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
-import static helpers.CustomApiListener.withCustomTemplates;
 import static io.qameta.allure.Allure.step;
-import static io.restassured.RestAssured.given;
-
 
 public class LoginExtension implements BeforeEachCallback {
 
@@ -26,75 +22,57 @@ public class LoginExtension implements BeforeEachCallback {
     @Getter
     private static String token;
 
-    private static final UserPage USER_PAGE = new UserPage();
-    private static final String LOGIN_ENDPOINT = "/Account/v1/Login";
-
+    private final AuthApiRequests authApi = new AuthApiRequests();
+    private final UserPage userPage = new UserPage();
 
     @Getter
     private final String login = System.getProperty("login");
     @Getter
-    private final String password = System.getProperty("password");
+    private final String defaultPassword = System.getProperty("password");
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) {
 
+        WithLogin annotation = getWithLoginAnnotation(extensionContext);
 
-        if (login == null || password == null) {
-            throw new IllegalStateException("\n[ERROR]: Логин или пароль не обнаружены в системных свойствах!\n" +
-                    "Для запуска в Jenkins используйте: -Dlogin=${login} -Dpassword=${password}\n" +
-                    "Для локального запуска добавьте их в VM Options в IDEA.");
-        }
-
-
-        WithLogin withLogin = extensionContext.getRequiredTestMethod().getAnnotation(WithLogin.class);
-        if (withLogin == null) {
-            withLogin = extensionContext.getRequiredTestClass().getAnnotation(WithLogin.class);
-        }
-
-
-        String username = (withLogin != null && !withLogin.username().isEmpty())
-                ? withLogin.username()
+        String username = (annotation != null && !annotation.username().isEmpty())
+                ? annotation.username()
                 : login;
 
-        String userPassword = (withLogin != null && !withLogin.password().isEmpty())
-                ? withLogin.password()
-                : password;
+        String password = (annotation != null && !annotation.password().isEmpty())
+                ? annotation.password()
+                : defaultPassword;
 
-        UserLoginData loginData = new UserLoginData(username, userPassword);
-
-
-        Response response = step("API: Аутентификация пользователя и получение токена", () -> given()
-                .filter(withCustomTemplates())
-                .spec(SpecCustoms.requestSpecification)
-                .body(loginData)
-                .when()
-                .post(LOGIN_ENDPOINT)
-                .then()
-                .spec(SpecCustoms.responseSpecificationBuilder(200))
-                .extract().response());
+        if (username == null || password == null) {
+            throw new IllegalStateException("Логин или пароль не заданы. Проверьте системные свойства или аннотацию @WithLogin");
+        }
 
 
-        step("UI: Открытие базовой страницы для инициализации домена", () -> {
-            USER_PAGE.openBrowser();
-        });
+        Response response = authApi.login(username, password);
 
 
-        step("UI: Инжекция авторизационных Cookies в браузер", () -> {
+        step("UI: Инициализация сессии в браузере", () -> {
             userId = response.path("userId");
             expires = response.path("expires");
             token = response.path("token");
+
+            userPage.openBrowser(); // Открываем домен для возможности установки Cookie
 
             getWebDriver().manage().addCookie(new Cookie("userID", userId));
             getWebDriver().manage().addCookie(new Cookie("expires", expires));
             getWebDriver().manage().addCookie(new Cookie("token", token));
         });
 
+        step("Allure: Логирование сессии", () -> Allure.addAttachment("Authorized User", username));
 
-        step("Allure: Прикрепление данных о сессии в отчет", () -> {
-            Allure.addAttachment("Authorized User", username);
-        });
+        step("UI: Переход на страницу профиля", userPage::openBrowserAuthorized);
+    }
 
-
-        step("UI: Переход на страницу профиля с активной сессией", USER_PAGE::openBrowserAuthorized);
+    private WithLogin getWithLoginAnnotation(ExtensionContext context) {
+        WithLogin annotation = context.getRequiredTestMethod().getAnnotation(WithLogin.class);
+        if (annotation == null) {
+            annotation = context.getRequiredTestClass().getAnnotation(WithLogin.class);
+        }
+        return annotation;
     }
 }
