@@ -1,8 +1,8 @@
 package tests;
 
-import extensions.LoginExtension;
-import api.BookApiRequests;
 import annotations.WithLogin;
+import api.BookApiRequests;
+import extensions.LoginExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
